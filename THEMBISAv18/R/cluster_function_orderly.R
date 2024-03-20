@@ -18,7 +18,7 @@ run_on_cluster <- function(pitc_reduction_years,
                            change_mmc,
                            mmc_rel_rate,
                            mmc_change_start,
-                           change_prep ,
+                           change_prep,
                            prep_rel_rate, 
                            prep_change_start,
                            summary_name){
@@ -41,7 +41,8 @@ run_on_cluster <- function(pitc_reduction_years,
                     "TotalART6to9", "TotalART10to14", "StartingART_M15", "StartingART_F15",
                     "AIDSdeaths0", "AIDSdeaths1to4", "AIDSdeaths5to9","AIDSdeaths10to14",
                     "PaedsHIVtestsPos", "PaedsHIVtestsNeg", "MalesOver15", "FemalesOver15", 
-                    "Number1stHIVtestsPos", "TotProtSexActs", "TotSexActs")
+                    "Number1stHIVtestsPos", "TotProtSexActs", "TotSexActs", "SWsexActsProt", "SWsexActs", 
+                    "ARTcoverageAdult")
   
   # create empty folder for results
   
@@ -331,8 +332,7 @@ run_on_cluster <- function(pitc_reduction_years,
     
   # saving a summary csv of all outputs
   summary <- as.data.frame(df) %>% 
-    dplyr::group_by(year, scenario, indicator, pitc_reduction_year, test_reduction
-                    , discount
+    dplyr::group_by(year, scenario, indicator, pitc_reduction_year, test_reduction, discount
                     ) %>%
     dplyr::summarise(mean = mean(value), upper_CI = quantile(value, probs = 0.975, na.rm = TRUE),
               lower_CI = quantile(value, probs = 0.025, na.rm = TRUE))  %>% mutate(future_variability = "test_reduction_only", future_value = 0)
@@ -353,7 +353,7 @@ run_on_cluster <- function(pitc_reduction_years,
     summary$future_value <- art_interrupt_rate_increase
   }
   
-  write.csv(summary, paste0("results/", summary_name,  "_summary.csv"))
+  write.csv(summary, paste0("results/", summary_name,  "_summary.csv"),row.names = FALSE)
 
 
   
@@ -423,7 +423,8 @@ run_on_cluster <- function(pitc_reduction_years,
   cumulative_summary1$cumulative_years <- cumulative_years
 
   # cumulative values
-  cumulative_years <- cumulative_years_list[2]
+  if (length(cumulative_years_list) >1){
+    cumulative_years <- cumulative_years_list[2]
 
   df_shortened <- df %>% filter(scenario %in% c("intervention", "baseline"),
                                 indicator %in% c("cost_total", "cost_total_care",
@@ -486,6 +487,9 @@ run_on_cluster <- function(pitc_reduction_years,
   cumulative_summary2$cumulative_years <- cumulative_years
 
   cumulative_summaries <- bind_rows(cumulative_summary1, cumulative_summary2)
+  } else {
+    cumulative_summaries <- cumulative_summary1
+  }
 
   write_csv(cumulative_summaries, paste0("results/", summary_name, "_cumulative.csv"))
 }
